@@ -17,6 +17,7 @@ const HelmetEditor = () => {
   const [helmetPos, setHelmetPos] = useState({ x: 150, y: 150 }); // Helmet default position
   const [flipHelmet, setFlipHelmet] = useState(false); // Helmet flipping state
   const [helmetSize, setHelmetSize] = useState({ width: 200, height: 0 }); // Initial helmet size
+  const [isImageUploaded, setIsImageUploaded] = useState(false); // Track if an image is uploaded
 
   const stageRef = useRef();
   const transformerRef = useRef();
@@ -46,6 +47,7 @@ const HelmetEditor = () => {
       const reader = new FileReader();
       reader.onload = () => {
         setUploadedImage(reader.result);
+        setIsImageUploaded(true); // Set image uploaded state
         resetHelmetPosition(); // Reset helmet position when background image is uploaded
       };
       reader.readAsDataURL(file);
@@ -195,7 +197,6 @@ const HelmetEditor = () => {
         {/* Buttons outside the Stage */}
         {uploadedBackground && (
           <>
-
             <button
               onClick={handleFlipHelmet}
               style={{
@@ -234,12 +235,23 @@ const HelmetEditor = () => {
 
       <div className="flex flex-col items-center md:pt-5 pt-3">
         <div className="md:pt-3 pt-2 w-full px-8">
-          <input type="file" style={{ display: 'none' }} {...getImageInputProps()} />
-          <button {...getImageRootProps({ className: 'dropzone' })} className="font-pretty text-white md:text-3xl text-2xl bg-red border-4 rounded-0 border-black shadow md:px-8 px-6 md:py-2 md:pt-4 py-1 pt-3 tracking-wide transition-all rotate-0 mx-auto w-full opacity-100 md:hover:scale-105">
-            Add Image
-          </button>
+          {isImageUploaded ? <button onClick={handleSave} className="font-pretty text-white md:text-3xl text-2xl bg-red border-4 rounded-0 border-black shadow md:px-8 px-6 md:py-2 md:pt-4 py-1 pt-3 tracking-wide transition-all rotate-0 mx-auto w-full opacity-100 md:hover:scale-105"
+          >
+            Save Image
+          </button> : <>
+            <input type="file" style={{ display: 'none' }} {...getImageInputProps()} />
+            <button
+              {...getImageRootProps({ className: 'dropzone' })}
+              className="font-pretty text-white md:text-3xl text-2xl bg-red border-4 rounded-0 border-black shadow md:px-8 px-6 md:py-2 md:pt-4 py-1 pt-3 tracking-wide transition-all rotate-0 mx-auto w-full opacity-100 md:hover:scale-105"
+            >
+              Add Image
+            </button></>
+          }
+
         </div>
       </div>
+
+
     </div>
   );
 };
