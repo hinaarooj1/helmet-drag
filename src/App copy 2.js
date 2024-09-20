@@ -13,7 +13,7 @@ const HelmetEditor = () => {
   const [selectedElement, setSelectedElement] = useState(null);
   const [image] = useImage(helmet); // Helmet image
   const [uploadedPonke] = useImage(ponkeImage); // Load Ponke character image
-  const [uploadedBackground] = useImage(uploadedImage); // Load uploaded image
+  const [uploadedBackground, setUploadedBackground] = useImage(uploadedImage); // Load uploaded image
   const [helmetPos, setHelmetPos] = useState({ x: 150, y: 150 }); // Helmet default position
   const [flipHelmet, setFlipHelmet] = useState(false); // Helmet flipping state
   const [helmetSize, setHelmetSize] = useState({ width: 200, height: 0 }); // Initial helmet size
@@ -56,18 +56,11 @@ const HelmetEditor = () => {
   });
 
   const resetHelmetPosition = () => {
-    // Reset helmet to default position
     setHelmetPos({ x: 150, y: 150 });
   };
 
   const handleSelect = (elementRef) => {
-    if (selectedElement === null) {
-      setSelectedElement(elementRef);
-
-    } else {
-
-      setSelectedElement(null);
-    }
+    setSelectedElement(elementRef);
   };
 
   const handleDeselect = (e) => {
@@ -77,7 +70,6 @@ const HelmetEditor = () => {
   };
 
   const handleSave = () => {
-    setSelectedElement(null);
     if (stageRef.current) {
       html2canvas(stageRef.current.content).then((canvas) => {
         const link = document.createElement('a');
@@ -86,7 +78,6 @@ const HelmetEditor = () => {
         link.click();
       });
     }
-
   };
 
   const handleFlipHelmet = () => {
@@ -102,14 +93,6 @@ const HelmetEditor = () => {
     setFlipHelmet(newFlipState);
   };
 
-  // Update transformer when the selected element changes
-  useEffect(() => {
-    if (selectedElement && transformerRef.current) {
-      transformerRef.current.nodes([selectedElement]);
-      transformerRef.current.getLayer().batchDraw();
-    }
-  }, [selectedElement]);
-
   // Adjust the helmet size when the image is loaded
   useEffect(() => {
     if (image) {
@@ -118,6 +101,8 @@ const HelmetEditor = () => {
       setHelmetSize({ width: 200, height });
     }
   }, [image]);
+
+  // Dynamically adjust canvas and background image size
   useEffect(() => {
     if (uploadedBackground) {
       const img = new window.Image();
@@ -137,31 +122,26 @@ const HelmetEditor = () => {
       };
     }
   }, [uploadedBackground, uploadedImage]);
-  let toggleCancel = () => {
-    setUploadedImage(null)
-    setIsImageUploaded(false)
-    setBgImageSize({ width: 450, height: 450 })
 
-  }
   return (
     <div className="w-full h-hf flex flex-col items-center md:justify-center h-full md:mt-0 mt-10">
-      <div className="flex md:gap-4 gap-2 md:text-5xl text-3xl items-end font-leper">
-        Put on a hat & <br />
-        Join the leper leper legion
+      <div className="flex md:gap-4 gap-2 md:text-5xl text-3xl items-end font-pretty">
+        <div className="z-[300]" style={{ opacity: 1, transform: 'none' }}>Put</div>
+        <div className="z-[300]" style={{ opacity: 1, transform: 'none' }}>on</div>
+        <div className="z-[300]" style={{ opacity: 1, transform: 'none' }}>A</div>
+        <div className="z-[300]" style={{ opacity: 1, transform: 'none' }}>Helmet</div>
       </div>
 
-
-      <div style={{ position: 'relative', width: bgImageSize.width, height: bgImageSize.height, border: "4px solid black" }} onClick={handleDeselect}>
+      <div style={{ position: 'relative', width: bgImageSize.width, height: bgImageSize.height }}>
         {/* Canvas */}
         <Stage
           ref={stageRef}
-
           width={bgImageSize.width}
           height={bgImageSize.height}
-          onMouseLeave={handleDeselect}
-          style={{ backgroundColor: "#226d44", }}
+          onMouseDown={handleDeselect}
+          style={{ backgroundColor: "#f3c684", border: "4px solid black" }}
         >
-          <Layer onClick={handleDeselect} onTouchStart={handleDeselect}>
+          <Layer>
             {/* Display uploaded background image */}
             {uploadedBackground && (
               <Image
@@ -169,7 +149,6 @@ const HelmetEditor = () => {
                 ref={imageRef}
                 x={0}
                 y={0}
-
                 width={bgImageSize.width}
                 height={bgImageSize.height}
               />
@@ -184,8 +163,6 @@ const HelmetEditor = () => {
                 y={100}
                 draggable
                 onClick={() => handleSelect(ponkeRef.current)}
-
-                onTouchStart={() => handleSelect(ponkeRef.current)}
               />
             )}
 
@@ -201,7 +178,6 @@ const HelmetEditor = () => {
                 height={helmetSize.height}
                 scaleX={flipHelmet ? -1 : 1}
                 scaleY={1}
-                onTouchStart={() => handleSelect(helmetRef.current)}
                 onClick={() => handleSelect(helmetRef.current)}
                 onDragEnd={(e) => setHelmetPos({ x: e.target.x(), y: e.target.y() })}
               />
@@ -223,7 +199,7 @@ const HelmetEditor = () => {
           </Layer>
         </Stage>
 
-        {/* Buttons outside the Stage */}
+        {/* Buttons */}
         {uploadedBackground && (
           <>
             <button
@@ -243,7 +219,7 @@ const HelmetEditor = () => {
               Flip
             </button>
             <button
-              onClick={toggleCancel} // Clear uploaded image
+              onClick={() => setUploadedImage(null)} // Clear uploaded image
               style={{
                 position: 'absolute',
                 top: '10px',
@@ -263,24 +239,26 @@ const HelmetEditor = () => {
       </div>
 
       <div className="flex flex-col items-center md:pt-5 pt-3">
-        <div className="md:pt-3 pt-2 w-full px-8">
-          {isImageUploaded ? <button onClick={handleSave} className="font-pretty text-white md:text-3xl lp-btn text-2xl bg-red border-4 rounded-0 border-black shadow md:px-8 px-6 md:py-2 md:pt-4 py-1 pt-3 tracking-wide transition-all rotate-0 mx-auto w-full opacity-100 md:hover:scale-105"
-          >
-            Save Image
-          </button> : <>
-            <input type="file" style={{ display: 'none' }} {...getImageInputProps()} />
-            <button
-              {...getImageRootProps({ className: 'dropzone' })}
-              className="font-pretty text-white md:text-3xl lp-btn text-2xl bg-red border-4 rounded-0 border-black shadow md:px-8 px-6 md:py-2 md:pt-4 py-1 pt-3 tracking-wide transition-all rotate-0 mx-auto w-full opacity-100 md:hover:scale-105"
-            >
-              Add Image
-            </button></>
-          }
+        <div className="flex gap-4 items-center">
+          <div {...getPonkeRootProps({ className: 'btn' })} style={{ padding: '5px', border: '2px solid black' }}>
+            <input {...getPonkeInputProps()} />
+            Upload Ponke Image
+          </div>
 
+          <div {...getImageRootProps({ className: 'btn' })} style={{ padding: '5px', border: '2px solid black' }}>
+            <input {...getImageInputProps()} />
+            Upload Background Image
+          </div>
         </div>
       </div>
 
+      <div className="mt-4 flex">
+        <button onClick={handleSave} className="btn">
+          Save Image with Helmet
+        </button>
+      </div>
 
+      <img src={logo_text_black} alt="Logo" className="mt-5 h-5 md:h-8" />
     </div>
   );
 };
